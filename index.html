@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>디 아일 성향 테스트</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 760px;
+      margin: 40px auto;
+      padding: 0 16px;
+      line-height: 1.6;
+    }
+    h1, h2, h3 { margin-bottom: 12px; }
+    .card {
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+    .choice {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 12px;
+      font-size: 16px;
+      text-align: left;
+      cursor: pointer;
+    }
+    .muted { color: #666; }
+    .hidden { display: none; }
+    .result-item {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 14px;
+      margin: 12px 0;
+    }
+    .tag {
+      display: inline-block;
+      border: 1px solid #bbb;
+      border-radius: 999px;
+      padding: 2px 8px;
+      margin: 4px 6px 0 0;
+      font-size: 13px;
+    }
+    .small { font-size: 14px; }
+    .progress { margin-top: 10px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>디 아일 성향 테스트</h1>
+  <p class="muted">기본형 버전이야. 선택지를 누르면서 진행하면 마지막에 1, 2, 3등 추천이 나와.</p>
+
+  <div id="start-screen" class="card">
+    <h2>시작</h2>
+    <p>총 9문항이고, 육식을 고르면 추가 질문 1개가 더 나와.</p>
+    <button id="start-btn" class="choice">검사 시작</button>
+  </div>
+
+  <div id="quiz-screen" class="card hidden">
+    <div id="progress" class="progress"></div>
+    <h2 id="question-title"></h2>
+    <div id="choices"></div>
+  </div>
+
+  <div id="result-screen" class="card hidden">
+    <h2>검사 결과</h2>
+    <div id="result-list"></div>
+    <button id="restart-btn" class="choice">다시 하기</button>
+  </div>
+
+  <script>
+    const species = [
+      {
+        name: "옴니랍토르",
+        diet: "carnivore",
+        styles: ["bleeder", "outfighter"],
+        group: ["pack"],
+        habitat: ["land"],
+        size: "small",
+        growth: ["mid"],
+        risk: ["mid", "high"],
+        combat: ["mid", "high"],
+        stamina: ["high"],
+        roamingType: "wide",
+        note: "팩 플레이 효율이 높은 소형 블리더/아웃파이터"
+      },
+      {
+        name: "카르노타우루스",
+        diet: "carnivore",
+        styles: ["rush"],
+        group: ["pair"],
+        habitat: ["land"],
+        size: "mid",
+        growth: ["mid", "high"],
+        risk: ["low", "mid"],
+        combat: ["mid"],
+        stamina: ["mid"],
+        roamingType: "wide",
+        note: "돌진 압박 중심의 중형 러쉬형"
+      },
+      {
+        name: "케라토사우루스",
+        diet: "carnivore",
+        styles: ["outfighter"],
+        group: ["pack", "solo"],
+        habitat: ["land"],
+        size: "mid",
+        growth: ["low"],
+        risk: ["mid"],
+        combat: ["mid", "high"],
+        stamina: ["low"],
+        roamingType: "wide",
+        note: "구토/디버프 압박이 강한 중형 아웃파이터"
+      },
+      {
+        name: "데이노수쿠스",
+        diet: "carnivore",
+        styles: ["assassination", "scavenger"],
+        group: ["solo", "pair"],
+        habitat: ["water"],
+        size: "large",
+        growth: ["high"],
+        risk: ["high"],
+        combat: ["low", "mid"],
+        stamina: ["high"],
+        roamingType: "camp",
+        note: "강가/물속 지배형의 대형 기습 포식자"
+      },
+      {
+        name: "프테라노돈",
+        diet: "carnivore",
+        styles: ["survivor", "roamer", "scavenger"],
+        group: ["solo", "pair", "pack"],
+        habitat: ["global"],
+        size: "small",
+        growth: ["low"],
+        risk: ["low"],
+        combat: ["high"],
+        stamina: ["high"],
+        roamingType: "wide",
+        note: "맵 전역을 날아다니는 생존/정찰형 익룡"
+        },
+	{
+  	name: "트로오돈",
+  	diet: "carnivore",
+  	styles: ["bleeder", "pack", "scavenger"],
+  	group: ["pack"],
+ 	habitat: ["land"],
+  	size: "small",
+  	growth: ["low", "mid"],
+  	risk: ["high"],
+ 	 combat: ["mid", "high"],
+	  stamina: ["high"],
+	  roamingType: "camp",
+	  note: "독과 시야 방해, 팩 운영이 핵심인 소형 육식"
+	},
+      {
+        name: "헤레라사우루스",
+        diet: "carnivore",
+        styles: ["assassination", "bleeder", "outfighter"],
+        group: ["solo"],
+        habitat: ["land"],
+        size: "small",
+        growth: ["mid", "high"],
+        risk: ["mid", "high"],
+        combat: ["high"],
+        stamina: ["mid"],
+        roamingType: "wide",
+        note: "등반과 드롭 어택이 핵심인 기습형 소형 육식"
+      },
+      {
+        name: "딜로포사우루스",
+        diet: "carnivore",
+        styles: ["bleeder", "outfighter"],
+        group: ["solo"],
+        habitat: ["land"],
+        size: "small",
+        growth: ["mid"],
+        risk: ["mid", "high"],
+        combat: ["mid", "high"],
+        stamina: ["mid"],
+        roamingType: "wide",
+        note: "독과 환각을 활용하는 소형 블리더"
+      },
+      {
+        name: "티라노사우루스",
+        diet: "carnivore",
+        styles: ["stand"],
+        group: ["solo", "pair"],
+        habitat: ["land"],
+        size: "apex",
+        growth: ["high"],
+        risk: ["high"],
+        combat: ["high"],
+        stamina: ["high"],
+        roamingType: "wide",
+        note: "초장기 성장 끝에 완성되는 초대형 대치형 포식자"
+      },
+      {
+        name: "알로사우루스",
+        diet: "carnivore",
+        styles: ["bleeder", "outfighter"],
+        group: ["pair", "pack"],
+        habitat: ["land"],
+        size: "large",
+        growth: ["mid"],
+        risk: ["mid"],
+        combat: ["high"],
+        stamina: ["mid", "high"],
+        roamingType: "wide",
+        note: "출혈 압박이 강한 대형 아웃파이터"
+      },
+      {
+        name: "테논토사우루스",
+        diet: "herbivore",
+        styles: ["rush", "stand"],
+        group: ["solo", "pack"],
+        habitat: ["land"],
+        size: "mid",
+        growth: ["low"],
+        risk: ["low"],
+        combat: ["mid", "high"],
+        stamina: ["mid"],
+        note: "꼬리와 발차기로 싸우는 중형 러쉬형 초식"
+      },
+      {
+        name: "드리오사우루스",
+        diet: "herbivore",
+        styles: ["survivor"],
+        group: ["pack"],
+        habitat: ["land"],
+        size: "small",
+        growth: ["low"],
+        risk: ["low"],
+        combat: ["mid", "high"],
+        stamina: ["mid"],
+        note: "빠르게 크고 잘 도망치는 소형 서바이버"
+      },
+      {
+        name: "힙실로포돈",
+        diet: "herbivore",
+        styles: ["survivor"],
+        group: ["solo"],
+        habitat: ["land"],
+        size: "small",
+        growth: ["low", "mid"],
+        risk: ["low"],
+        combat: ["low"],
+        stamina: ["high"],
+        note: "거의 교전을 피하며 생존하는 소형 초식"
+      },
+      {
+        name: "스테고사우루스",
+        diet: "herbivore",
+        styles: ["bleeder", "stand"],
+        group: ["pair"],
+        habitat: ["land"],
+        size: "large",
+        growth: ["mid", "high"],
+        risk: ["high"],
+        combat: ["mid"],
+        stamina: ["high"],
+        note: "묵직한 한방과 출혈 압박이 강한 대형 초식"
+      },
+      {
+        name: "파키케팔로사우루스",
+        diet: "herbivore",
+        styles: ["rush", "outfighter"],
+        group: ["solo", "pack"],
+        habitat: ["land"],
+        size: "small",
+        growth: ["low"],
+        risk: ["mid"],
+        combat: ["mid"],
+        stamina: ["mid"],
+        note: "골절과 넉백이 강한 소형 전투형 초식"
+      },
+      {
+        name: "디아블로케라톱스",
+        diet: "herbivore",
+        styles: ["rush", "stand"],
+        group: ["pair", "pack"],
+        habitat: ["land"],
+        size: "mid",
+        growth: ["mid"],
+        risk: ["mid"],
+        combat: ["mid", "high"],
+        stamina: ["mid"],
+        note: "방어태세와 뿔 압박이 강한 중형 초식"
+      },
+      {
+        name: "마이아사우라",
+        diet: "herbivore",
+        styles: ["rush", "stand"],
+        group: ["solo", "pair", "pack"],
+        habitat: ["land"],
+        size: "large",
+        growth: ["mid"],
+        risk: ["high"],
+        combat: ["mid", "high"],
+        stamina: ["high"],
+        note: "태세 전환에 따라 고점이 갈리는 대형 초식"
+      },
+      {
+        name: "트리케라톱스",
+        diet: "herbivore",
+        styles: ["stand"],
+        group: ["pair"],
+        habitat: ["land"],
+        size: "apex",
+        growth: ["high"],
+        risk: ["high"],
+        combat: ["high"],
+        stamina: ["high"],
+        note: "초대형 대치형 초식의 끝판왕"
+      },
+      {
+        name: "베이피아오사우루스",
+        diet: "omnivore",
+        styles: ["survivor", "roamer"],
+        group: ["solo", "pack"],
+        habitat: ["water"],
+        size: "small",
+        growth: ["low", "mid"],
+        risk: ["low", "mid"],
+        combat: ["low", "mid"],
+        stamina: ["mid"],
+        note: "반수생 운영이 핵심인 소형 잡식"
+      },
+      {
+        name: "갈리미무스",
+        diet: "omnivore",
+        styles: ["survivor", "roamer"],
+        group: ["solo", "pack"],
+        habitat: ["land"],
+        size: "small",
+        growth: ["low"],
+        risk: ["low"],
+        combat: ["high"],
+        stamina: ["high"],
+        note: "압도적인 기동성이 핵심인 소형 잡식"
+      }
+    ];
+
+    const questions = [
+      {
+        id: "diet",
+        title: "질문 1. 초식과 육식, 그리고 잡식 어떤 게 더 좋나요?",
+        choices: [
+          { text: "초식", apply: s => s.diet === "herbivore" ? 100 : -999 },
+          { text: "육식", apply: s => s.diet === "carnivore" ? 100 : -999 },
+          { text: "잡식", apply: s => s.diet === "omnivore" ? 100 : -999 }
+        ]
+      },
+      {
+        id: "fun",
+        title: "질문 2. 당신은 The Isle을 어떤 재미로 즐기려고 하나요?",
+        choices: [
+          { text: "들어가! 달려! 상대를 압박하며 쫒아가는 진입!", tags: ["rush"], weight: 2 },
+          { text: "방심한 그 틈을 타서.. 왁! 하고 죽여버리는 암살!", tags: ["assassination"], weight: 2 },
+          { text: "손에 긴장이 그득그득.. 말려죽이기!", tags: ["bleeder", "outfighter"], weight: 2 },
+          { text: "다양한 생물의 생태를 구경하고 스트레스를 풀자!", tags: ["roamer", "survivor"], weight: 2 }
+        ]
+      },
+      {
+        id: "group",
+        title: "질문 3. 동료와 함께 한다면 어느 정도 규모가 좋나요?",
+        choices: [
+          { text: "야생은 무조건 나 혼자지!", value: "solo", field: "group", weight: 2 },
+          { text: "든든한 동료 한명! 그거면 충분해!", value: "pair", field: "group", weight: 2 },
+          { text: "다다익선! 많으면 많을수록 좋다고!", value: "pack", field: "group", weight: 2 }
+        ]
+      },
+      {
+        id: "habitat",
+        title: "질문 4. 서식지는 어디가 좋으신가요?",
+        choices: [
+          { text: "육지 전역!", value: "land", field: "habitat", weight: 2 },
+          { text: "물가/강 중심!", value: "water", field: "habitat", weight: 2 },
+          { text: "맵 전체!", value: "global", field: "habitat", weight: 2 }
+        ]
+      },
+      {
+        id: "size",
+        title: "질문 5. 기르는 생물의 크기는 어느 정도가 좋은가요?",
+        choices: [
+          { text: "압도적인 존재감의 초대형", value: "apex", field: "size", weight: 2 },
+          { text: "묵직하고 안정감 있는 대형", value: "large", field: "size", weight: 2 },
+          { text: "균형 잡히고 속도감 있는 중형", value: "mid", field: "size", weight: 2 },
+          { text: "빠르게 크고 유연한 소형", value: "small", field: "size", weight: 2 }
+        ]
+      },
+      {
+        id: "growth",
+        title: "질문 6. 성장 난이도는 어느 정도까지 괜찮나요?",
+        choices: [
+          { text: "빨리 크고 바로 즐기고 싶다!", value: "low", field: "growth", weight: 1 },
+          { text: "조금 오래 걸려도 괜찮다!", value: "mid", field: "growth", weight: 1 },
+          { text: "오래 키워도 최종 보상이 크면 된다!", value: "high", field: "growth", weight: 1 }
+        ]
+      },
+      {
+        id: "risk",
+        title: "질문 7. 플레이 스타일은 어느 쪽이 더 좋아요?",
+        choices: [
+          { text: "무조건 안전! 내 아이는 안전해야 해!", value: "low", field: "risk", weight: 1 },
+          { text: "전투하는 게임이면 스릴은 있어야 하지 않겠어? 감수하지 뭐!", value: "mid", field: "risk", weight: 1 },
+          { text: "죽어도 괜찮다! 한방의 낭만이 좋다!", value: "high", field: "risk", weight: 1 }
+        ]
+      },
+      {
+        id: "combat",
+        title: "질문 8. 전투 난이도는 어떤 게 좋나요?",
+        choices: [
+          { text: "컨트롤 하나는 내가 짱이지! 어려워도 가져와봐!", value: "high", field: "combat", weight: 1 },
+          { text: "대충 컨트롤해도 평타 이상 치는 게 좋지!", value: "mid", field: "combat", weight: 1 },
+          { text: "컨트롤이랑은 거리가 좀 멀어서..", value: "low", field: "combat", weight: 1 }
+        ]
+      },
+      {
+        id: "stamina",
+        title: "질문 9. 스태미나 관리가 중요한 플레이는 어떤가요?",
+        choices: [
+          { text: "귀찮은데?", value: "low", field: "stamina", weight: 1 },
+          { text: "적당하게만 가자!", value: "mid", field: "stamina", weight: 1 },
+          { text: "관리해야 그게 생존게임이지!", value: "high", field: "stamina", weight: 1 }
+        ]
+      },
+      {
+        id: "roaming",
+        title: "질문 10. 사냥할 때 어느 쪽이 더 끌리나요?",
+        carnivoreOnly: true,
+        tieBreaker: true,
+        choices: [
+          { text: "한 구역에 머물며, 안전한 거점 근처에서 각을 오래 보는 편이 좋다", mode: "camp" },
+          { text: "여기저기 돌아다니며 기회가 보이면 바로 물고 늘어지는 편이 좋다", mode: "wide" }
+        ]
+      }
+    ];
+
+    const state = {
+      currentIndex: 0,
+      answers: {},
+      scores: {}
+    };
+
+    function resetScores() {
+      state.scores = {};
+      species.forEach(s => state.scores[s.name] = 0);
+    }
+
+    function scoreByValue(field, value, weight) {
+      species.forEach(s => {
+        const target = s[field];
+        if (Array.isArray(target)) {
+          if (target.includes(value)) state.scores[s.name] += weight;
+        } else {
+          if (target === value) state.scores[s.name] += weight;
+        }
+      });
+    }
+
+    function scoreByTags(tags, weight) {
+      species.forEach(s => {
+        let gained = 0;
+        tags.forEach(tag => {
+          if (s.styles.includes(tag)) gained += weight;
+        });
+        state.scores[s.name] += gained;
+      });
+    }
+
+    function applyDiet(choice) {
+      species.forEach(s => {
+        state.scores[s.name] += choice.apply(s);
+      });
+    }
+
+    function shouldAskTieBreaker() {
+      if (state.answers.diet !== "carnivore") return false;
+      const ranked = getRankedSpecies();
+      const topCarnivores = ranked.filter(r => getSpecies(r.name).diet === "carnivore").slice(0, 3).map(r => r.name);
+      const set = new Set(topCarnivores);
+      return set.has("옴니랍토르") || set.has("데이노수쿠스") || set.has("트로오돈");
+    }
+
+    function applyTieBreaker(mode) {
+      if (mode === "camp") {
+        addScore("트로오돈", 5); // future-proof if later added
+        addScore("데이노수쿠스", 5);
+      }
+      if (mode === "wide") {
+        addScore("옴니랍토르", 4);
+        addScore("딜로포사우루스", 2);
+        addScore("헤레라사우루스", 2);
+      }
+    }
+
+    function addScore(name, amount) {
+      if (state.scores[name] !== undefined) state.scores[name] += amount;
+    }
+
+    function getSpecies(name) {
+      return species.find(s => s.name === name);
+    }
+
+    function getVisibleQuestions() {
+      return questions.filter(q => {
+        if (q.carnivoreOnly && state.answers.diet !== "carnivore") return false;
+        if (q.tieBreaker && !shouldAskTieBreaker()) return false;
+        return true;
+      });
+    }
+
+    function renderQuestion() {
+      const visibleQuestions = getVisibleQuestions();
+      const question = visibleQuestions[state.currentIndex];
+      const total = visibleQuestions.length;
+
+      if (!question) {
+        showResults();
+        return;
+      }
+
+      document.getElementById("progress").textContent = `${state.currentIndex + 1} / ${total}`;
+      document.getElementById("question-title").textContent = question.title;
+      const choicesEl = document.getElementById("choices");
+      choicesEl.innerHTML = "";
+
+      question.choices.forEach(choice => {
+        const btn = document.createElement("button");
+        btn.className = "choice";
+        btn.textContent = choice.text;
+        btn.onclick = () => handleChoice(question, choice);
+        choicesEl.appendChild(btn);
+      });
+    }
+
+    function handleChoice(question, choice) {
+      if (question.id === "diet") {
+        state.answers.diet = choice.text === "초식" ? "herbivore" : choice.text === "육식" ? "carnivore" : "omnivore";
+        applyDiet(choice);
+      } else if (question.id === "fun") {
+        scoreByTags(choice.tags, choice.weight);
+      } else if (question.id === "roaming") {
+        applyTieBreaker(choice.mode);
+      } else {
+        state.answers[question.id] = choice.value || choice.mode || choice.text;
+        scoreByValue(choice.field, choice.value, choice.weight);
+      }
+
+      state.currentIndex += 1;
+      renderQuestion();
+    }
+
+    function getRankedSpecies() {
+      return Object.entries(state.scores)
+        .map(([name, score]) => ({ name, score, info: getSpecies(name) }))
+        .filter(item => item.score > -900)
+        .sort((a, b) => b.score - a.score);
+    }
+
+    function showResults() {
+      document.getElementById("quiz-screen").classList.add("hidden");
+      document.getElementById("result-screen").classList.remove("hidden");
+
+      const ranked = getRankedSpecies().slice(0, 3);
+      const resultList = document.getElementById("result-list");
+      resultList.innerHTML = "";
+
+      if (ranked.length === 0) {
+        resultList.innerHTML = "<p>결과를 만들 수 없었어.</p>";
+        return;
+      }
+
+      ranked.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "result-item";
+        div.innerHTML = `
+          <h3>${index + 1}등. ${item.name}</h3>
+          <p><strong>점수:</strong> ${item.score}</p>
+          <p>${item.info.note}</p>
+          <div class="small">
+            <span class="tag">식성: ${translateDiet(item.info.diet)}</span>
+            <span class="tag">크기: ${translateSize(item.info.size)}</span>
+            <span class="tag">서식지: ${translateHabitat(item.info.habitat)}</span>
+          </div>
+        `;
+        resultList.appendChild(div);
+      });
+    }
+
+    function translateDiet(value) {
+      return value === "carnivore" ? "육식" : value === "herbivore" ? "초식" : "잡식";
+    }
+
+    function translateSize(value) {
+      return value === "apex" ? "초대형" : value === "large" ? "대형" : value === "mid" ? "중형" : "소형";
+    }
+
+    function translateHabitat(values) {
+      const arr = Array.isArray(values) ? values : [values];
+      return arr.map(v => {
+        if (v === "land") return "육지";
+        if (v === "water") return "물가/강";
+        if (v === "global") return "맵 전역";
+        return v;
+      }).join(", ");
+    }
+
+    function startQuiz() {
+      state.currentIndex = 0;
+      state.answers = {};
+      resetScores();
+      document.getElementById("start-screen").classList.add("hidden");
+      document.getElementById("result-screen").classList.add("hidden");
+      document.getElementById("quiz-screen").classList.remove("hidden");
+      renderQuestion();
+    }
+
+    document.getElementById("start-btn").onclick = startQuiz;
+    document.getElementById("restart-btn").onclick = () => {
+      document.getElementById("start-screen").classList.remove("hidden");
+      document.getElementById("result-screen").classList.add("hidden");
+    };
+
+    resetScores();
+  </script>
+</body>
+</html>
