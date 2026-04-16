@@ -54,7 +54,7 @@
 
   <div id="start-screen" class="card">
     <h2>시작</h2>
-    <p>총 9문항이고, 육식을 고르면 추가 질문 1개가 더 나와.</p>
+    <p>식성에 따라 질문 수가 달라져. 육식은 추가 질문이 나올 수 있어.</p>
     <button id="start-btn" class="choice">검사 시작</button>
   </div>
 
@@ -490,13 +490,13 @@
 
     function applyTieBreaker(mode) {
       if (mode === "camp") {
-        addScore("트로오돈", 5); // future-proof if later added
-        addScore("데이노수쿠스", 5);
+        addScore("트로오돈", 2); // future-proof if later added
+        addScore("데이노수쿠스", 2);
       }
       if (mode === "wide") {
-        addScore("옴니랍토르", 4);
-        addScore("딜로포사우루스", 2);
-        addScore("헤레라사우루스", 2);
+        addScore("옴니랍토르", 2);
+        addScore("딜로포사우루스", 1);
+        addScore("헤레라사우루스", 1);
       }
     }
 
@@ -517,7 +517,6 @@
         return true;
         });
       }
-    }
 
     function renderQuestion() {
       const visibleQuestions = getVisibleQuestions();
