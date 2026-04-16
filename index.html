@@ -356,6 +356,7 @@
       },
       {
         id: "fun",
+        carnivoreOnly: true,
         title: "질문 2. 당신은 The Isle을 어떤 재미로 즐기려고 하나요?",
         choices: [
           { text: "들어가! 달려! 상대를 압박하며 쫒아가는 진입!", tags: ["rush"], weight: 2 },
@@ -375,6 +376,7 @@
       },
       {
         id: "habitat",
+        carnivoreOnly: true,
         title: "질문 4. 서식지는 어디가 좋으신가요?",
         choices: [
           { text: "육지 전역!", value: "land", field: "habitat", weight: 2 },
@@ -509,9 +511,12 @@
     function getVisibleQuestions() {
       return questions.filter(q => {
         if (q.carnivoreOnly && state.answers.diet !== "carnivore") return false;
+        if (q.herbivoreOnly && state.answers.diet !== "herbivore") return false;
+        if (q.omnivoreOnly && state.answers.diet !== "omnivore") return false;
         if (q.tieBreaker && !shouldAskTieBreaker()) return false;
         return true;
-      });
+        });
+      }
     }
 
     function renderQuestion() {
